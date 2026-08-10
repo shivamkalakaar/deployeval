@@ -18,7 +18,7 @@ leaking my users' data, and did it cost me anything?*
 
 Eight real AWS deployments: two Claude tiers (Opus 4.8, Sonnet 5) across four apps, each built and
 deployed by the model itself, then adversarially probed and torn down. Full write-up with charts:
-**[the results page](site/index.html)** (open locally, or view the published site).
+**[the results page](docs/index.html)** (open locally, or view the published site).
 
 | App | failure surface | Opus 4.8 | Sonnet 5 |
 |---|---|---|---|
