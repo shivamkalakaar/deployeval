@@ -1,0 +1,172 @@
+{
+  "meta": {
+    "trials": 8,
+    "models": [
+      "opus-4-8",
+      "sonnet-5"
+    ],
+    "tasks": [
+      "notes-auth",
+      "cart-pay",
+      "file-share",
+      "realtime-room"
+    ],
+    "excluded_models": [
+      "haiku-4-5 (not enabled on account)",
+      "fable-5 (intermittently unavailable)"
+    ],
+    "note": "All builds model-pinned via headless CLI, provenance-verified against Bedrock modelUsage; cost from CLI total_cost_usd."
+  },
+  "summary": {
+    "opus-4-8": {
+      "trials": 4,
+      "shipped": 4,
+      "verified": 3,
+      "silent_failures": 1,
+      "free_tier_ok": 3,
+      "total_build_cost_usd": 11.53
+    },
+    "sonnet-5": {
+      "trials": 4,
+      "shipped": 4,
+      "verified": 3,
+      "silent_failures": 1,
+      "free_tier_ok": 3,
+      "total_build_cost_usd": 5.31
+    }
+  },
+  "trials_data": [
+    {
+      "task": "cart-pay",
+      "model": "opus-4-8",
+      "model_full": "claude-opus-4-8",
+      "shipped": true,
+      "verified_working": true,
+      "silent_failure": false,
+      "probes_passed": 11,
+      "probes_total": 11,
+      "critical_passed": 7,
+      "critical_total": 7,
+      "free_tier_ok": true,
+      "off_allowlist": [],
+      "build_cost_usd": 2.115433,
+      "cost_source": "bedrock-cli-total_cost_usd"
+    },
+    {
+      "task": "cart-pay",
+      "model": "sonnet-5",
+      "model_full": "claude-sonnet-5",
+      "shipped": true,
+      "verified_working": true,
+      "silent_failure": false,
+      "probes_passed": 8,
+      "probes_total": 8,
+      "critical_passed": 5,
+      "critical_total": 5,
+      "free_tier_ok": true,
+      "off_allowlist": [],
+      "build_cost_usd": 1.038174,
+      "cost_source": "bedrock-cli-total_cost_usd"
+    },
+    {
+      "task": "file-share",
+      "model": "opus-4-8",
+      "model_full": "claude-opus-4-8",
+      "shipped": true,
+      "verified_working": false,
+      "silent_failure": true,
+      "probes_passed": 8,
+      "probes_total": 9,
+      "critical_passed": 4,
+      "critical_total": 5,
+      "free_tier_ok": true,
+      "off_allowlist": [],
+      "build_cost_usd": 1.195795,
+      "cost_source": "bedrock-cli-total_cost_usd"
+    },
+    {
+      "task": "file-share",
+      "model": "sonnet-5",
+      "model_full": "claude-sonnet-5",
+      "shipped": true,
+      "verified_working": false,
+      "silent_failure": true,
+      "probes_passed": 8,
+      "probes_total": 9,
+      "critical_passed": 4,
+      "critical_total": 5,
+      "free_tier_ok": true,
+      "off_allowlist": [],
+      "build_cost_usd": 1.650145,
+      "cost_source": "bedrock-cli-total_cost_usd"
+    },
+    {
+      "task": "notes-auth",
+      "model": "opus-4-8",
+      "model_full": "claude-opus-4-8",
+      "shipped": true,
+      "verified_working": true,
+      "silent_failure": false,
+      "probes_passed": 11,
+      "probes_total": 11,
+      "critical_passed": 7,
+      "critical_total": 7,
+      "free_tier_ok": true,
+      "off_allowlist": [],
+      "build_cost_usd": 0.888353,
+      "cost_source": "bedrock-cli-total_cost_usd"
+    },
+    {
+      "task": "notes-auth",
+      "model": "sonnet-5",
+      "model_full": "claude-sonnet-5",
+      "shipped": true,
+      "verified_working": true,
+      "silent_failure": false,
+      "probes_passed": 11,
+      "probes_total": 11,
+      "critical_passed": 7,
+      "critical_total": 7,
+      "free_tier_ok": true,
+      "off_allowlist": [],
+      "build_cost_usd": 1.174297,
+      "cost_source": "bedrock-cli-total_cost_usd"
+    },
+    {
+      "task": "realtime-room",
+      "model": "opus-4-8",
+      "model_full": "claude-opus-4-8",
+      "shipped": true,
+      "verified_working": true,
+      "silent_failure": false,
+      "probes_passed": 7,
+      "probes_total": 7,
+      "critical_passed": 5,
+      "critical_total": 5,
+      "free_tier_ok": false,
+      "off_allowlist": [
+        "AWS::CloudFront::Distribution"
+      ],
+      "build_cost_usd": 7.330969,
+      "cost_source": "bedrock-cli-total_cost_usd"
+    },
+    {
+      "task": "realtime-room",
+      "model": "sonnet-5",
+      "model_full": "claude-sonnet-5",
+      "shipped": true,
+      "verified_working": true,
+      "silent_failure": false,
+      "probes_passed": 7,
+      "probes_total": 7,
+      "critical_passed": 5,
+      "critical_total": 5,
+      "free_tier_ok": false,
+      "off_allowlist": [
+        "AWS::CloudFront::Distribution"
+      ],
+      "build_cost_usd": 1.44629,
+      "cost_source": "bedrock-cli-total_cost_usd"
+    }
+  ]
+}

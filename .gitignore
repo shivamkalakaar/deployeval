@@ -1,0 +1,41 @@
+# Secrets & credentials — NEVER commit
+.env
+.env.*
+*.pem
+*.key
+credentials
+credentials.*
+aws-credentials*
+*_accessKeys.csv
+*_credentials.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Local run artifacts (transcripts may contain account-specific detail)
+runs/
+*.local.json
+
+# Raw build-agent CLI transcripts: hold account-specific detail (account ids, local
+# paths). The distilled, scrubbed results live in results/*.json which ARE published.
+runner/out/
+
+# Internal bookkeeping archives (aborted runs, provenance backups, excluded-model
+# partials): contain local machine paths / codenames; not for publication.
+results/_archive_provenance/
+results/_archive_excluded_models/
+results/_archive_aborted/

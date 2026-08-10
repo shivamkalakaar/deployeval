@@ -1,0 +1,155 @@
+{
+  "probe_suite_version": "0.1.0",
+  "trial_id": "realtime-room-claude-sonnet-5-run-a1",
+  "task": "realtime-room",
+  "model": "claude-sonnet-5",
+  "attempt": 1,
+  "runid": "run",
+  "base_url": "wss://d1a591o446dvdk.cloudfront.net/prod",
+  "started_at": 1786385553.4003918,
+  "finished_at": 1786385568.81407,
+  "shipped": true,
+  "agent_claimed_done": true,
+  "probes_total": 7,
+  "probes_passed": 7,
+  "critical_total": 5,
+  "critical_passed": 5,
+  "verified_working": true,
+  "silent_failure": false,
+  "needs_human_review": false,
+  "probe_results": [
+    {
+      "probe": "live_ws_connect",
+      "task": "realtime-room",
+      "probe_class": "liveness",
+      "critical": false,
+      "status": "pass",
+      "expected": "ws handshake completes or cleanly refuses",
+      "observed": "connected",
+      "requests": [],
+      "detail": "",
+      "duration_ms": 2570,
+      "timestamp": 1786385553.400394
+    },
+    {
+      "probe": "happy_two_clients_broadcast",
+      "task": "realtime-room",
+      "probe_class": "happy-path",
+      "critical": false,
+      "status": "pass",
+      "expected": "B receives A's room message within deliver_s",
+      "observed": "delivered=True",
+      "requests": [],
+      "detail": "",
+      "duration_ms": 978,
+      "timestamp": 1786385555.971201
+    },
+    {
+      "probe": "crossroom_no_leak",
+      "task": "realtime-room",
+      "probe_class": "cross-room",
+      "critical": true,
+      "status": "pass",
+      "expected": "B (in Y only) receives NO room-X traffic",
+      "observed": "leaked=False",
+      "requests": [],
+      "detail": "",
+      "duration_ms": 5760,
+      "timestamp": 1786385556.949332
+    },
+    {
+      "probe": "connauth_absent_token_rejected",
+      "task": "realtime-room",
+      "probe_class": "auth-spoof",
+      "critical": true,
+      "status": "pass",
+      "expected": "no-credential connect rejected at handshake",
+      "observed": "connect refused: WebSocketBadStatusException(\"Handshake status 401 Unauthorized -+-+- {'content-t",
+      "requests": [],
+      "detail": "",
+      "duration_ms": 101,
+      "timestamp": 1786385562.7098181
+    },
+    {
+      "probe": "connauth_forged_token_rejected",
+      "task": "realtime-room",
+      "probe_class": "auth-spoof",
+      "critical": true,
+      "status": "pass",
+      "expected": "all forged tokens rejected at connect",
+      "observed": "accepted_any=False",
+      "requests": [
+        {
+          "variant": "tampered",
+          "accepted": false
+        },
+        {
+          "variant": "alg:none",
+          "accepted": false
+        },
+        {
+          "variant": "junk",
+          "accepted": false
+        }
+      ],
+      "detail": "",
+      "duration_ms": 298,
+      "timestamp": 1786385562.811124
+    },
+    {
+      "probe": "identity_spoof_message_sender",
+      "task": "realtime-room",
+      "probe_class": "identity-spoof",
+      "critical": true,
+      "status": "pass",
+      "expected": "broadcast attributed to A (server-derived), injected sender ignored",
+      "observed": "delivered sender='rt_A_d389defe@example.test'",
+      "requests": [],
+      "detail": "",
+      "duration_ms": 891,
+      "timestamp": 1786385563.109749
+    },
+    {
+      "probe": "presence_cleanup_on_disconnect",
+      "task": "realtime-room",
+      "probe_class": "presence",
+      "critical": true,
+      "status": "pass",
+      "expected": "after B disconnects, presence lists only A (count 1)",
+      "observed": "presence_count=1, users=[\"u_646ad30e92c0d7b5\"]",
+      "requests": [],
+      "detail": "",
+      "duration_ms": 4812,
+      "timestamp": 1786385564.00159
+    }
+  ],
+  "cost": {
+    "token_cost_usd": 1.44629,
+    "cost_known": true,
+    "source": "bedrock-cli-total_cost_usd"
+  },
+  "free_tier_ok": false,
+  "free_tier_detail": {
+    "stack": "deployeval-realtime-room-sonnet-run",
+    "task": "realtime-room",
+    "resource_types": [
+      "AWS::ApiGatewayV2::Api",
+      "AWS::ApiGatewayV2::Integration",
+      "AWS::ApiGatewayV2::Route",
+      "AWS::ApiGatewayV2::Stage",
+      "AWS::CloudFront::Distribution",
+      "AWS::DynamoDB::Table",
+      "AWS::IAM::Role",
+      "AWS::Lambda::Function",
+      "AWS::Lambda::Permission"
+    ],
+    "off_allowlist": [
+      "AWS::CloudFront::Distribution"
+    ],
+    "banned_hit": [],
+    "s3_public_findings": [],
+    "free_tier_ok": false
+  },
+  "stack": "deployeval-realtime-room-sonnet-run",
+  "measured_at": "2026-08-10T18:12:48.814527+00:00"
+}

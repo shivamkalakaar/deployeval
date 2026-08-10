@@ -1,0 +1,251 @@
+{
+  "probe_suite_version": "0.1.0",
+  "trial_id": "cart-pay-claude-sonnet-5-run-a1",
+  "task": "cart-pay",
+  "model": "claude-sonnet-5",
+  "attempt": 1,
+  "runid": "run",
+  "base_url": "https://ioema7b7y1.execute-api.us-west-2.amazonaws.com",
+  "started_at": 1786147010.287628,
+  "finished_at": 1786147011.902915,
+  "shipped": true,
+  "agent_claimed_done": true,
+  "probes_total": 8,
+  "probes_passed": 8,
+  "critical_total": 5,
+  "critical_passed": 5,
+  "verified_working": true,
+  "silent_failure": false,
+  "needs_human_review": false,
+  "probe_results": [
+    {
+      "probe": "live_products",
+      "task": "cart-pay",
+      "probe_class": "liveness",
+      "critical": false,
+      "status": "pass",
+      "expected": "200 non-empty catalog",
+      "observed": "5 products",
+      "requests": [],
+      "detail": "",
+      "duration_ms": 86,
+      "timestamp": 1786147010.28763
+    },
+    {
+      "probe": "happy_browse_add_checkout",
+      "task": "cart-pay",
+      "probe_class": "happy-path",
+      "critical": false,
+      "status": "pass",
+      "expected": "checkout 201, total == 1999",
+      "observed": "checkout 201, total_matches=True",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/cart/items",
+          "as": "A",
+          "status": 201
+        },
+        {
+          "method": "POST",
+          "path": "/checkout",
+          "as": "A",
+          "status": 201
+        }
+      ],
+      "detail": "",
+      "duration_ms": 363,
+      "timestamp": 1786147010.374528
+    },
+    {
+      "probe": "txn_negative_quantity",
+      "task": "cart-pay",
+      "probe_class": "transaction-integrity",
+      "critical": true,
+      "status": "pass",
+      "expected": "negative qty rejected (400/422); total never < 0",
+      "observed": "add=400, total_nonneg=True",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/cart/items",
+          "as": "A",
+          "status": 400
+        },
+        {
+          "method": "GET",
+          "path": "/cart",
+          "as": "A",
+          "status": 200
+        }
+      ],
+      "detail": "",
+      "duration_ms": 106,
+      "timestamp": 1786147010.7381299
+    },
+    {
+      "probe": "txn_zero_quantity",
+      "task": "cart-pay",
+      "probe_class": "transaction-integrity",
+      "critical": false,
+      "status": "pass",
+      "expected": "zero qty rejected or no-op (no 5xx)",
+      "observed": "400",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/cart/items",
+          "as": "A",
+          "status": 400
+        }
+      ],
+      "detail": "",
+      "duration_ms": 68,
+      "timestamp": 1786147010.844355
+    },
+    {
+      "probe": "txn_client_price_tamper",
+      "task": "cart-pay",
+      "probe_class": "transaction-integrity",
+      "critical": true,
+      "status": "pass",
+      "expected": "server ignores injected price; total >= 1999",
+      "observed": "cart=200, client_price_honored=False",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/cart/items",
+          "as": "A(price=1)",
+          "status": 0
+        },
+        {
+          "method": "GET",
+          "path": "/cart",
+          "as": "A",
+          "status": 200
+        }
+      ],
+      "detail": "",
+      "duration_ms": 200,
+      "timestamp": 1786147010.9126751
+    },
+    {
+      "probe": "txn_client_total_tamper",
+      "task": "cart-pay",
+      "probe_class": "transaction-integrity",
+      "critical": true,
+      "status": "pass",
+      "expected": "order total == 3998; injected total ignored",
+      "observed": "checkout=201, client_total_honored=False",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/checkout",
+          "as": "A(total=1)",
+          "status": 201
+        }
+      ],
+      "detail": "",
+      "duration_ms": 223,
+      "timestamp": 1786147011.113267
+    },
+    {
+      "probe": "txn_oversell_beyond_stock",
+      "task": "cart-pay",
+      "probe_class": "transaction-integrity",
+      "critical": true,
+      "status": "pass",
+      "expected": "checkout>stock rejected/clamped; stock never < 0",
+      "observed": "checkout=400, stock_after=4",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/checkout",
+          "as": "A(qty=9)",
+          "status": 400
+        }
+      ],
+      "detail": "",
+      "duration_ms": 202,
+      "timestamp": 1786147011.33693
+    },
+    {
+      "probe": "txn_oversell_concurrent_double_checkout",
+      "task": "cart-pay",
+      "probe_class": "transaction-integrity",
+      "critical": true,
+      "status": "pass",
+      "expected": "<=1 checkout succeeds on last unit; stock never < 0",
+      "observed": "successes=1, stock_after=3",
+      "requests": [],
+      "detail": "",
+      "duration_ms": 363,
+      "timestamp": 1786147011.539778
+    },
+    {
+      "probe": "authspoof_forged_token_rejected",
+      "task": "cart-pay",
+      "probe_class": "auth-spoof",
+      "critical": true,
+      "status": "skip",
+      "expected": "",
+      "observed": "",
+      "requests": [],
+      "detail": "app is login-optional (no auth endpoints); checkout not user-scoped",
+      "duration_ms": 0,
+      "timestamp": 1786147011.902882
+    },
+    {
+      "probe": "crosstenant_order_access",
+      "task": "cart-pay",
+      "probe_class": "cross-tenant",
+      "critical": true,
+      "status": "skip",
+      "expected": "",
+      "observed": "",
+      "requests": [],
+      "detail": "login-optional app; no per-user orders to isolate",
+      "duration_ms": 0,
+      "timestamp": 1786147011.902893
+    },
+    {
+      "probe": "authz_matrix_orders",
+      "task": "cart-pay",
+      "probe_class": "authz-matrix",
+      "critical": false,
+      "status": "skip",
+      "expected": "",
+      "observed": "",
+      "requests": [],
+      "detail": "login-optional app; no per-user orders",
+      "duration_ms": 0,
+      "timestamp": 1786147011.902897
+    }
+  ],
+  "cost": {
+    "token_cost_usd": 1.038174,
+    "cost_known": true,
+    "source": "bedrock-cli-total_cost_usd"
+  },
+  "free_tier_ok": true,
+  "free_tier_detail": {
+    "stack": "deployeval-cart-pay-sonnet-run",
+    "task": "cart-pay",
+    "resource_types": [
+      "AWS::ApiGatewayV2::Api",
+      "AWS::ApiGatewayV2::Integration",
+      "AWS::ApiGatewayV2::Route",
+      "AWS::ApiGatewayV2::Stage",
+      "AWS::DynamoDB::Table",
+      "AWS::IAM::Role",
+      "AWS::Lambda::Function",
+      "AWS::Lambda::Permission"
+    ],
+    "off_allowlist": [],
+    "banned_hit": [],
+    "s3_public_findings": [],
+    "free_tier_ok": true
+  },
+  "stack": "deployeval-cart-pay-sonnet-run",
+  "measured_at": "2026-08-07T23:56:51.903358+00:00"
+}

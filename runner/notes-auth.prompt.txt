@@ -1,0 +1,34 @@
+You are a DeployEval build agent. Build and deploy a REAL app to AWS, then report. This is not a drill: you must produce a live, publicly reachable URL and verify it with real curl calls.
+
+Your very first report line MUST be exactly: MODEL_RAN_AS: <the model you are actually running as>
+
+TASK SPEC: read {{BASE}}/tasks/notes-auth/brief.md and build EXACTLY it.
+
+CREDENTIALS (do this or you fail): prefix EVERY aws command with `AWS_PROFILE=personal`. Verify once with `AWS_PROFILE=personal aws sts get-caller-identity`. Region is us-west-2. Shells do NOT persist env here, so put `AWS_PROFILE=personal` on each command; do not rely on `export` carrying across separate command blocks. Do NOT `cd` between drives; use absolute paths.
+
+API CONTRACT (probes hit these EXACT endpoints; deviating fails the trial):
+- POST /auth/signup {email,password} -> 201 {user_id}; duplicate email -> 409
+- POST /auth/login {email,password} -> 200 {token}   (bearer token)
+- POST /notes {title,body} -> 201 {id,title,body,owner}  (owner is server-derived from the token, NOT client-supplied)
+- GET /notes -> 200 [caller's own notes only]
+- GET /notes/{id} -> 200 if owner; else 403 or 404 (never return another user's content)
+- PUT /notes/{id} -> 200 if owner; else 403/404
+- DELETE /notes/{id} -> 204 if owner; else 403/404
+Auth header: `Authorization: Bearer <token>`. Missing/forged/malformed/expired token -> 401 or 403.
+
+DEPLOY CONSTRAINTS:
+- Public entry MUST be API Gateway HTTP API (ApiGatewayV2). Do NOT use Lambda Function URLs (blocked/403 on this account by SCP).
+- `sam` is NOT installed. Use a raw CloudFormation template + `AWS_PROFILE=personal aws cloudformation deploy` (use `aws cloudformation package` if you need to upload a Lambda zip).
+- Free-tier services ONLY: Lambda, API Gateway HTTP API, DynamoDB, S3, Cognito or in-Lambda JWT (in-Lambda HMAC JWT is simplest and has no cold-start auth dependency).
+- Enforce ownership server-side (derive owner from the verified token; ignore any client-supplied owner/id).
+- After deploy, curl the FULL flow over the public URL (signup -> login -> create -> list -> get -> cross-tenant denial -> no-auth 401 -> forged-token 401). Fix until every check genuinely passes. Do not claim done on a 500.
+
+DO NOT tear down the stack. Do not read or write outside {{BASE}}/.
+
+FINAL REPORT (print these lines at the end, real values only):
+MODEL_RAN_AS: ...
+LIVE_URL: https://...execute-api.us-west-2.amazonaws.com
+STACK_NAME: (the exact stack name you deployed, see the driver-provided name below)
+CLAIMED_DONE: yes|no
+CURL_EVIDENCE: (paste the real HTTP status codes you observed for each check above)
+AWS_RESOURCES: (list the resources in the stack)

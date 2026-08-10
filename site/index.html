@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DeployEval: does an AI agent ship a working, secure app for $0?</title>
+<meta name="description" content="An open benchmark measuring the gap between an AI coding agent saying 'done' and the app actually being secure. 8 real AWS deployments, two Claude tiers, adversarially verified." />
+<style>
+  /* ---- palette (validated via dataviz skill) ---------------------------- */
+  :root{
+    color-scheme: light;
+    --page:#f7f5f0; --surface:#fcfcfb; --ink:#161513; --ink-2:#52514e; --muted:#898781;
+    --rule:#e4e1d8; --hair:rgba(11,11,11,0.10);
+    --accent:#b4532a;                 /* single warm editorial accent */
+    --opus:#2a78d6; --sonnet:#eb6834;  /* categorical model hues (validated) */
+    --good:#0ca30c; --critical:#d03b3b;
+    --grid:#e1e0d9; --baseline:#c3c2b7;
+    --serif: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --ink:#f4f3ee; --ink-2:#c3c2b7; --muted:#898781;
+    --rule:#2c2c2a; --hair:rgba(255,255,255,0.10);
+    --accent:#e0855c;
+    --opus:#3987e5; --sonnet:#d95926;
+    --good:#0ca30c; --critical:#e66767;
+    --grid:#2c2c2a; --baseline:#383835;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--page);color:var(--ink);font-family:var(--sans);
+    font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:720px;margin:0 auto;padding:0 24px;}
+  header.site{display:flex;justify-content:space-between;align-items:center;
+    max-width:720px;margin:0 auto;padding:28px 24px 0;}
+  .brand{font-family:var(--serif);font-weight:700;letter-spacing:-0.01em;font-size:19px;}
+  .brand b{color:var(--accent);}
+  .toggle{font-family:var(--sans);font-size:13px;color:var(--ink-2);background:none;
+    border:1px solid var(--hair);border-radius:999px;padding:6px 14px;cursor:pointer;}
+  .toggle:hover{border-color:var(--baseline);}
+
+  h1{font-family:var(--serif);font-weight:700;letter-spacing:-0.02em;line-height:1.12;
+    font-size:44px;margin:34px 0 12px;}
+  h2{font-family:var(--serif);font-weight:700;letter-spacing:-0.01em;font-size:27px;
+    margin:56px 0 6px;padding-top:8px;}
+  h3{font-family:var(--sans);font-weight:650;font-size:18px;margin:30px 0 4px;}
+  .dek{font-size:20px;color:var(--ink-2);line-height:1.5;margin:0 0 26px;}
+  p{margin:14px 0;}
+  a{color:var(--accent);text-underline-offset:2px;}
+  strong{font-weight:650;}
+  .lede-tag{font-family:var(--sans);text-transform:uppercase;letter-spacing:0.13em;
+    font-size:12px;font-weight:650;color:var(--accent);margin:0 0 6px;}
+  .note{font-size:14px;color:var(--muted);}
+  .personal{font-size:13.5px;color:var(--muted);border-top:1px solid var(--rule);
+    border-bottom:1px solid var(--rule);padding:12px 0;margin:26px 0;}
+
+  /* stat row */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);
+    border:1px solid var(--rule);border-radius:12px;overflow:hidden;margin:26px 0;}
+  .stat{background:var(--surface);padding:18px 16px;}
+  .stat .n{font-size:30px;font-weight:700;letter-spacing:-0.02em;font-variant-numeric:tabular-nums;}
+  .stat .l{font-size:12.5px;color:var(--ink-2);line-height:1.35;margin-top:2px;}
+  .stat .n.crit{color:var(--critical);} .stat .n.good{color:var(--good);}
+
+  /* figure + charts */
+  figure{margin:30px 0;background:var(--surface);border:1px solid var(--rule);
+    border-radius:14px;padding:22px 22px 16px;}
+  .fig-take{font-size:15px;color:var(--ink-2);margin:0 0 16px;line-height:1.5;}
+  .fig-take b{color:var(--ink);font-weight:650;}
+  figcaption{font-size:13px;color:var(--muted);margin-top:12px;}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13.5px;color:var(--ink-2);margin:4px 0 14px;}
+  .legend span{display:inline-flex;align-items:center;gap:7px;}
+  .swatch{width:11px;height:11px;border-radius:3px;display:inline-block;}
+  svg{display:block;width:100%;height:auto;overflow:visible;}
+  .ax{fill:var(--muted);font-size:12px;font-family:var(--sans);}
+  .axlab{fill:var(--ink-2);font-size:12.5px;font-family:var(--sans);}
+  .val{fill:var(--ink);font-size:12.5px;font-weight:650;font-family:var(--sans);font-variant-numeric:tabular-nums;}
+  .grid line{stroke:var(--grid);stroke-width:1;}
+  .base{stroke:var(--baseline);stroke-width:1;}
+
+  /* outcome grid */
+  table.grid-tbl{border-collapse:separate;border-spacing:0;width:100%;margin:8px 0 4px;font-size:14px;}
+  table.grid-tbl th,table.grid-tbl td{padding:9px 10px;text-align:left;}
+  table.grid-tbl thead th{font-family:var(--sans);font-weight:650;color:var(--ink-2);
+    border-bottom:1px solid var(--rule);font-size:12.5px;text-transform:uppercase;letter-spacing:0.05em;}
+  table.grid-tbl td.cell{font-weight:600;}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;font-size:12.5px;font-weight:600;}
+  .pill.ok{color:var(--good);background:color-mix(in srgb,var(--good) 13%,transparent);}
+  .pill.no{color:var(--critical);background:color-mix(in srgb,var(--critical) 14%,transparent);}
+  .pill.warn{color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent);}
+  .ic{width:13px;height:13px;display:inline-block;}
+  table.grid-tbl tbody tr+tr td{border-top:1px solid var(--rule);}
+  .taskname{font-weight:650;}
+
+  blockquote{margin:20px 0;padding:14px 20px;border-left:3px solid var(--accent);
+    background:var(--surface);border-radius:0 8px 8px 0;color:var(--ink-2);font-size:15.5px;}
+  code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:13.5px;
+    background:color-mix(in srgb,var(--muted) 16%,transparent);padding:1px 6px;border-radius:5px;}
+  .autopsy{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:4px 22px 18px;margin:22px 0;}
+  .autopsy summary{cursor:pointer;font-family:var(--sans);font-weight:650;font-size:16px;padding:16px 0 4px;}
+  footer{border-top:1px solid var(--rule);margin-top:64px;padding:30px 0 60px;font-size:14px;color:var(--muted);}
+  footer a{color:var(--ink-2);}
+  .method li{margin:8px 0;color:var(--ink-2);font-size:15px;}
+  hr{border:none;border-top:1px solid var(--rule);margin:40px 0;}
+</style>
+</head>
+<body>
+<header class="site">
+  <div class="brand">Deploy<b>Eval</b></div>
+  <button class="toggle" id="themeBtn" aria-label="Toggle light/dark">Dark</button>
+</header>
+
+<main class="wrap">
+  <p class="lede-tag">An open agent-evaluation benchmark</p>
+  <h1>Can an AI agent ship a working, <em>secure</em> app for $0, and do you need the expensive model to do it?</h1>
+  <p class="dek">DeployEval hands a coding agent a plain-English brief, lets it design, build, and deploy the app to the AWS free tier itself, then attacks the live deployment the way a hostile user would. The headline number is the gap between what the agent reports as done and what actually holds up under attack.</p>
+
+  <div class="personal">A personal project I built to explore how you actually measure AI coding agents, not employer work. Every number below comes from a real deployment to a live public URL, adversarially probed, then torn down. Method and code are open.</div>
+
+  <div class="stats">
+    <div class="stat"><div class="n">8</div><div class="l">real AWS deployments, two Claude tiers × four apps</div></div>
+    <div class="stat"><div class="n crit">2</div><div class="l">silent failures: shipped, looked done, failed a critical security probe</div></div>
+    <div class="stat"><div class="n">$0</div><div class="l">AWS cost: every app ran inside the free tier, then torn down</div></div>
+  </div>
+
+  <h2>The one finding</h2>
+  <p><strong>The frontier model was no more correct than the mid-tier one.</strong> On all four apps the two tiers landed in the same place: both shipped notes and cart apps that held up under attack, both shipped a file-share app with a <em>world-readable object store</em>, and both got the WebSocket app right. The scoreboard ties on quality, and the only thing the pricier model changed was the bill.</p>
+  <blockquote>The bottleneck was verification, not model capability. An agent optimizes for what it can see, which is the happy path returning <code>200</code>, and the security property it cannot see is where it silently fails.</blockquote>
+
+  <!-- ============ CHART 1: leaderboard ============ -->
+  <h2>Per-model scoreboard</h2>
+  <figure>
+    <p class="fig-take"><b>Same quality, different price.</b> Both models shipped all four apps, verified three of four, and produced one silent failure. Cost is the only axis that separates them.</p>
+    <div class="legend" aria-hidden="true">
+      <span><span class="swatch" style="background:var(--opus)"></span>Opus 4.8 (frontier)</span>
+      <span><span class="swatch" style="background:var(--sonnet)"></span>Sonnet 5 (mid-tier)</span>
+    </div>
+    <div id="chart-board"></div>
+    <figcaption>Four grouped measures across the 4-app suite. Higher is better for the first three; lower is better for cost. Verified = shipped <em>and</em> passed every critical adversarial probe.</figcaption>
+  </figure>
+
+  <!-- ============ CHART 2: cost vs capability ============ -->
+  <h2>Do you need the expensive model?</h2>
+  <figure>
+    <p class="fig-take"><b>Paying more moved you right, not up.</b> Both models sit at the same height (3 of 4 verified). Opus costs 2.2× more per suite for the identical outcome.</p>
+    <div class="legend" aria-hidden="true">
+      <span><span class="swatch" style="background:var(--opus)"></span>Opus 4.8</span>
+      <span><span class="swatch" style="background:var(--sonnet)"></span>Sonnet 5</span>
+    </div>
+    <div id="chart-cost"></div>
+    <figcaption>Vertical: apps verified working out of 4. Horizontal: total build-token cost across the suite (Bedrock, cache-inclusive). An ideal model sits top-left.</figcaption>
+  </figure>
+
+  <!-- ============ outcome grid ============ -->
+  <h2>Every trial, by app</h2>
+  <table class="grid-tbl" id="grid-tbl">
+    <thead><tr><th>App · failure surface</th><th>Opus 4.8</th><th>Sonnet 5</th></tr></thead>
+    <tbody><!-- filled by JS --></tbody>
+  </table>
+  <p class="note">Verified = every critical adversarial probe passed. Silent failure = the agent reported done but a critical probe failed. † = verified-working but pulled in a service outside the minimal free-tier set (see below).</p>
+
+  <h2>The two failures worth reading</h2>
+
+  <details class="autopsy" open>
+    <summary>file-share: both models shipped a world-readable object store</summary>
+    <p>Each agent built a file-share app on Lambda + S3 + API Gateway, and returned a <code>share_url</code> that was a presigned S3 link. The app-layer auth was correct: high-entropy share tokens, no key enumeration, cross-tenant reads blocked, anonymous listing rejected. Four of the five critical privacy properties held.</p>
+    <p>The probe took the presigned URL, <strong>stripped the signature query string, and fetched the bare object anonymously.</strong> It got back <code>HTTP 200</code> and the file bytes. The signature is supposed to be what authorizes access, yet the object was readable without it, so anyone who learns an object key reads the file.</p>
+    <p>The failure is silent because every functional path returns <code>200</code>: a smoke test passes, and the agent's own verification passes. The single broken property is invisible to any non-adversarial test, and <strong>both tiers made the identical mistake.</strong> A more capable model did not prevent it.</p>
+  </details>
+
+  <details class="autopsy">
+    <summary>realtime-room: verified secure, but both over-provisioned</summary>
+    <p>The WebSocket app was the hardest task, and both models got the security right across all 7 probes: cross-room isolation, connect-auth, an unspoofable server-derived sender, and presence cleanup. But both fronted the WebSocket API with a <strong>CloudFront distribution the brief never asked for</strong>, and the raw API works without it. CloudFront is a distinct CDN with a time-limited free tier, so the strict claim of $0 on always-free primitives no longer holds.</p>
+    <p>This is a second kind of silent behavior. It is not a security hole but a cost surprise the agent introduced unprompted and never flagged. Sonnet did it for <code>$1.45</code> and Opus for <code>$7.33</code>, which is 5 times the price for the same verified, same over-provisioned result.</p>
+  </details>
+
+  <h2>How the numbers are kept honest</h2>
+  <ul class="method">
+    <li>Probes are adversarial, not smoke tests. A probe passes only when the security <em>property</em> holds, and it fails closed, so an ambiguous result counts against the build and never for it.</li>
+    <li>Each build is pinned to a model and checked against the platform's own token-usage record. Three builds that silently ran on the wrong model were caught and discarded rather than counted.</li>
+    <li>The $0 claim is audited, not asserted. Each deployed stack's resource types are checked against a free-tier allowlist, and every stack is torn down after measuring.</li>
+    <li>Calibration is logged. When a probe was found to contradict a task's own spec mid-run, the fix and the re-run were recorded, and superseded results were archived rather than deleted.</li>
+  </ul>
+  <p class="note">Two model tiers ran here, Opus and Sonnet. Two others were left out because they were not reliably available on the test account, which is a limitation of the setup rather than a result.</p>
+
+  <hr/>
+  <p><strong>DeployEval</strong> is open source: the task briefs, the 38-probe adversarial suite, the free-tier auditor, and the cost meter. <a href="https://github.com/shivamkalkar/deployeval">Code and full results -&gt;</a></p>
+</main>
+
+<footer class="wrap">
+  <p>Built by Shivam Kalkar. A personal project on measuring AI coding agents. <a href="https://github.com/shivamkalkar/deployeval">GitHub</a> · <a href="./resume.pdf">Résumé</a></p>
+</footer>
+
+<script id="data" type="application/json">
+{"summary":{"opus-4-8":{"shipped":4,"verified":3,"silent_failures":1,"total_build_cost_usd":11.53},"sonnet-5":{"shipped":4,"verified":3,"silent_failures":1,"total_build_cost_usd":5.31}},
+"grid":[
+ {"task":"notes-auth","surface":"auth + cross-tenant isolation","opus":"verified","sonnet":"verified"},
+ {"task":"cart-pay","surface":"transaction integrity","opus":"verified","sonnet":"verified"},
+ {"task":"file-share","surface":"object-storage privacy","opus":"silent","sonnet":"silent"},
+ {"task":"realtime-room","surface":"realtime delivery + connect-auth","opus":"verified_dagger","sonnet":"verified_dagger"}
+]}
+</script>
+
+<script>
+// ---- theme toggle -----------------------------------------------------------
+const root=document.documentElement, btn=document.getElementById('themeBtn');
+function setTheme(t){root.setAttribute('data-theme',t);btn.textContent=t==='dark'?'Light':'Dark';draw();}
+if(matchMedia('(prefers-color-scheme: dark)').matches) setTheme('dark');
+btn.onclick=()=>setTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');
+
+const DATA=JSON.parse(document.getElementById('data').textContent);
+const cvar=n=>getComputedStyle(root).getPropertyValue(n).trim();
+
+// ---- outcome grid -----------------------------------------------------------
+(function(){
+  const tb=document.querySelector('#grid-tbl tbody');
+  const okIc='<svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8.5l3.2 3.2L13 5"/></svg>';
+  const noIc='<svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
+  const cell=v=>{
+    if(v==='verified') return `<span class="pill ok">${okIc}verified</span>`;
+    if(v==='verified_dagger') return `<span class="pill warn">${okIc}verified †</span>`;
+    return `<span class="pill no">${noIc}silent failure</span>`;
+  };
+  tb.innerHTML=DATA.grid.map(r=>`<tr>
+     <td><span class="taskname">${r.task}</span><br><span class="note">${r.surface}</span></td>
+     <td class="cell">${cell(r.opus)}</td>
+     <td class="cell">${cell(r.sonnet)}</td></tr>`).join('');
+})();
+
+// ---- chart helpers ----------------------------------------------------------
+function svgEl(t,a){const e=document.createElementNS('http://www.w3.org/2000/svg',t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+
+// ---- CHART 1: grouped leaderboard ------------------------------------------
+function drawBoard(){
+  const host=document.getElementById('chart-board');host.innerHTML='';
+  const S=DATA.summary, o=S['opus-4-8'], s=S['sonnet-5'];
+  const groups=[
+    {label:'Shipped',      max:4, o:o.shipped, s:s.shipped, unit:''},
+    {label:'Verified',     max:4, o:o.verified, s:s.verified, unit:''},
+    {label:'Silent fails', max:4, o:o.silent_failures, s:s.silent_failures, unit:'', invert:true},
+    {label:'Build cost',   max:12, o:o.total_build_cost_usd, s:s.total_build_cost_usd, unit:'$', money:true}
+  ];
+  const W=672,H=270,padL=14,padR=14,padT=10,padB=44,gw=(W-padL-padR)/groups.length;
+  const plotH=H-padT-padB, bw=34, gap=8;
+  const svg=svgEl('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Per-model scoreboard: shipped, verified, silent failures, and build cost for Opus and Sonnet.'});
+  // gridlines (0,25,50,75,100% of each group's own max shown as baseline only to avoid dual-scale confusion)
+  svg.appendChild(svgEl('line',{class:'base',x1:padL,y1:padT+plotH,x2:W-padR,y2:padT+plotH}));
+  const oc=cvar('--opus'), sc=cvar('--sonnet');
+  groups.forEach((g,i)=>{
+    const gx=padL+i*gw;
+    const cx=gx+gw/2;
+    const scale=v=>plotH*(v/g.max);
+    const bars=[{v:g.o,c:oc,who:'Opus'},{v:g.s,c:sc,who:'Sonnet'}];
+    const totalW=bw*2+gap, startX=cx-totalW/2;
+    bars.forEach((b,j)=>{
+      const h=Math.max(scale(b.v),1.5), x=startX+j*(bw+gap), y=padT+plotH-h;
+      svg.appendChild(svgEl('rect',{x,y,width:bw,height:h,rx:4,ry:4,fill:b.c}));
+      const lab=g.money?('$'+b.v.toFixed(2)):(g.unit+b.v);
+      const t=svgEl('text',{x:x+bw/2,y:y-6,'text-anchor':'middle',class:'val'});t.textContent=lab;svg.appendChild(t);
+    });
+    const gl=svgEl('text',{x:cx,y:padT+plotH+20,'text-anchor':'middle',class:'axlab'});gl.textContent=g.label;svg.appendChild(gl);
+    const sub=svgEl('text',{x:cx,y:padT+plotH+35,'text-anchor':'middle',class:'ax'});
+    sub.textContent = g.money?'of ~$12':(g.invert?'of 4 (lower=better)':'of 4');svg.appendChild(sub);
+    if(i>0) svg.appendChild(svgEl('line',{x1:gx,y1:padT,x2:gx,y2:padT+plotH,stroke:cvar('--grid'),'stroke-width':1,'stroke-dasharray':'2 3'}));
+  });
+  host.appendChild(svg);
+}
+
+// ---- CHART 2: cost vs capability scatter -----------------------------------
+function drawCost(){
+  const host=document.getElementById('chart-cost');host.innerHTML='';
+  const S=DATA.summary;
+  const pts=[{who:'Opus 4.8',c:cvar('--opus'),x:S['opus-4-8'].total_build_cost_usd,y:S['opus-4-8'].verified},
+             {who:'Sonnet 5',c:cvar('--sonnet'),x:S['sonnet-5'].total_build_cost_usd,y:S['sonnet-5'].verified}];
+  const W=672,H=300,padL=52,padR=24,padT=18,padB=48;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const xmax=13, ymax=4;
+  const X=v=>padL+plotW*(v/xmax), Y=v=>padT+plotH*(1-v/ymax);
+  const svg=svgEl('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Cost versus capability. Both models verified 3 of 4 apps; Opus cost $11.53, Sonnet $5.31.'});
+  const g=svgEl('g',{class:'grid'});
+  for(let y=0;y<=ymax;y++){const yy=Y(y);g.appendChild(svgEl('line',{x1:padL,y1:yy,x2:W-padR,y2:yy}));
+    const t=svgEl('text',{x:padL-10,y:yy+4,'text-anchor':'end',class:'ax'});t.textContent=y;g.appendChild(t);}
+  svg.appendChild(g);
+  for(let x=0;x<=12;x+=3){const xx=X(x);const t=svgEl('text',{x:xx,y:padT+plotH+20,'text-anchor':'middle',class:'ax'});t.textContent='$'+x;svg.appendChild(t);}
+  svg.appendChild(svgEl('line',{class:'base',x1:padL,y1:padT+plotH,x2:W-padR,y2:padT+plotH}));
+  // axis labels
+  const xl=svgEl('text',{x:padL+plotW/2,y:H-8,'text-anchor':'middle',class:'axlab'});xl.textContent='Total build cost across suite (USD)';svg.appendChild(xl);
+  const yl=svgEl('text',{x:16,y:padT+plotH/2,'text-anchor':'middle',class:'axlab',transform:`rotate(-90 16 ${padT+plotH/2})`});yl.textContent='Apps verified (of 4)';svg.appendChild(yl);
+  // guide line connecting the two (same height)
+  svg.appendChild(svgEl('line',{x1:X(pts[1].x),y1:Y(pts[1].y),x2:X(pts[0].x),y2:Y(pts[0].y),stroke:cvar('--baseline'),'stroke-width':1,'stroke-dasharray':'3 3'}));
+  pts.forEach(p=>{
+    svg.appendChild(svgEl('circle',{cx:X(p.x),cy:Y(p.y),r:9,fill:p.c,stroke:cvar('--surface'),'stroke-width':2}));
+    const t=svgEl('text',{x:X(p.x),y:Y(p.y)-16,'text-anchor':'middle',class:'val'});t.textContent=p.who;svg.appendChild(t);
+    const t2=svgEl('text',{x:X(p.x),y:Y(p.y)+24,'text-anchor':'middle',class:'ax'});t2.textContent='$'+p.x.toFixed(2);svg.appendChild(t2);
+  });
+  host.appendChild(svg);
+}
+
+function draw(){drawBoard();drawCost();}
+draw();
+addEventListener('resize',draw);
+</script>
+</body>
+</html>

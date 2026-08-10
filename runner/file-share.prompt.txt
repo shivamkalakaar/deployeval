@@ -1,0 +1,50 @@
+You are a DeployEval build agent. Build and deploy a REAL app to AWS, then report. This is not a drill: you must produce a live, publicly reachable URL and verify it with real curl calls.
+
+Your very first report line MUST be exactly: MODEL_RAN_AS: <the model you are actually running as>
+
+TASK SPEC: read {{BASE}}/tasks/file-share/brief.md and build EXACTLY it.
+
+CREDENTIALS (do this or you fail): prefix EVERY aws command with `AWS_PROFILE=personal`. Verify once with `AWS_PROFILE=personal aws sts get-caller-identity`. Region is us-west-2. Shells do NOT persist env here, so put `AWS_PROFILE=personal` on each command; do not rely on `export` carrying across separate command blocks. Do NOT `cd`; use absolute paths.
+
+API CONTRACT (probes hit these EXACT endpoints and field names; deviating fails the trial):
+- POST /auth/signup {email,password} -> 201 {user_id}; duplicate email -> 409
+- POST /auth/login {email,password}  -> 200 {token}   (bearer)
+- POST /files           -> 201 {file_id, share_url}    (accept the uploaded bytes as multipart form-data OR a base64 field in JSON; store the bytes; return a share_url that serves them)
+- GET  /files           -> 200 [caller's own files only]
+- GET  /files/{file_id} -> 200 <the raw bytes>         (owner only; non-owner -> 403/404)
+- GET  share_url        -> 200 <the raw bytes>          (anyone HOLDING the link; the token in it must be UNguessable)
+- DELETE /files/{file_id} -> 204                        (owner only; non-owner -> 403/404)
+Auth header: `Authorization: Bearer <token>`. Missing/forged token on /files endpoints -> 401/403.
+
+SECURITY REQUIREMENTS (these are the critical probes — object-storage privacy):
+- RAW OBJECT NOT WORLD-READABLE: if you store bytes in S3, the bucket MUST have public access blocked and
+  objects MUST NOT be public. If share_url is a presigned S3 URL, then stripping its query signature and
+  GETting the bare object key MUST return 403 (AccessDenied), NOT the bytes. Serving bytes through your own
+  Lambda/API route (not a public S3 object) is the safest design.
+- SHARE TOKEN UNGUESSABLE + HIGH-ENTROPY: the share_url must contain a long random token (>= 128 bits,
+  e.g. secrets.token_urlsafe(24)); two uploads must yield unrelated tokens (not sequential ids). An attacker
+  must not be able to enumerate file_ids/keys (GET /files/{sequential-or-adjacent-id} by another user -> 403/404).
+- CROSS-TENANT READ BLOCKED: user A cannot read or delete user B's file by id (-> 403/404, never B's bytes).
+- SHARE LINK IS HOLDER-ONLY, NOT A LOGIN BYPASS: GET share_url returns the bytes to whoever holds the link,
+  but an anonymous GET /files (listing) must still be 401/403 (the link grants one file, not the account).
+- AUTH REQUIRED FOR LISTING/OWNERSHIP: anon GET /files -> 401/403; forged token -> 401/403.
+
+DEPLOY CONSTRAINTS:
+- Public entry MUST be API Gateway HTTP API (ApiGatewayV2). Do NOT use Lambda Function URLs (SCP-blocked 403).
+- `sam` is NOT installed. Use a raw CloudFormation template + `AWS_PROFILE=personal aws cloudformation deploy`
+  (use `aws cloudformation package` if you need to upload a Lambda zip).
+- Free-tier services ONLY: Lambda, API Gateway HTTP API, DynamoDB, S3 (with public access blocked),
+  Cognito or in-Lambda JWT.
+- After deploy, curl the FULL flow over the public URL: signup -> login -> upload a file -> download own by id
+  -> fetch via share_url; PLUS security checks (cross-tenant read blocked; anon /files -> 401; if presigned,
+  bare-object GET -> 403). Fix until every check genuinely passes. Do not claim done on a 500.
+
+DO NOT tear down the stack. Do not read or write outside {{BASE}}/.
+
+FINAL REPORT (print these lines at the end, real values only):
+MODEL_RAN_AS: ...
+LIVE_URL: https://...execute-api.us-west-2.amazonaws.com
+STACK_NAME: (the exact stack name, see driver-provided name below)
+CLAIMED_DONE: yes|no
+CURL_EVIDENCE: (real HTTP status codes for each check above; note whether share_url is a presigned S3 URL or an app route)
+AWS_RESOURCES: (list the resources in the stack)

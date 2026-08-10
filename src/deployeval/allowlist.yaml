@@ -1,0 +1,54 @@
+# DeployEval free-tier service allowlist — single source of truth.
+# A deployed stack may ONLY use resources whose CloudFormation type is listed here.
+# Anything else fails the free-tier check (free_tier_ok = false). Keep this conservative:
+# every entry must be AWS-free-tier eligible at the scale these demo apps run.
+
+# Rationale per service is documented so a reviewer can audit the "$0" claim.
+
+global_allow:
+  # Compute
+  - AWS::Lambda::Function            # 1M requests/mo always-free
+  - AWS::Lambda::Permission
+  # Public HTTP entry: API Gateway HTTP API (v2). NOTE: pilot found this account's SCP BLOCKS
+  # public Lambda Function URLs (AuthType NONE -> 403), but API Gateway HTTP API works (200).
+  # So HTTP API is the required public entry for all HTTP tasks; Function URLs are banned here.
+  - AWS::ApiGatewayV2::Api
+  - AWS::ApiGatewayV2::Stage
+  - AWS::ApiGatewayV2::Route
+  - AWS::ApiGatewayV2::Integration
+  # Data
+  - AWS::DynamoDB::Table             # 25GB + 25 RCU/WCU always-free
+  # Object storage
+  - AWS::S3::Bucket                  # 5GB (12-mo free); MUST have public access blocked
+  - AWS::S3::BucketPolicy
+  # Auth (optional; tasks may instead do in-Lambda JWT)
+  - AWS::Cognito::UserPool           # 50k MAU free
+  - AWS::Cognito::UserPoolClient
+  # Packaging / IAM plumbing (no standalone cost)
+  - AWS::IAM::Role
+  - AWS::IAM::Policy
+  - AWS::CloudFormation::Stack
+  - AWS::CloudFormation::CustomResource  # deploy-time helper (backed by an allowed Lambda); runs once, no ongoing bill
+  - "Custom::"                        # custom-resource type prefix (e.g. Custom::CatalogSeeder); deploy-time only
+  - AWS::Logs::LogGroup              # CloudWatch Logs free tier
+
+# Task-specific carve-outs. realtime-room legitimately needs API Gateway WebSocket
+# (there is no Function-URL equivalent for websockets); it is free-tier eligible.
+# HTTP/REST API Gateway remains BANNED for all tasks (the others use Lambda Function URLs).
+task_allow:
+  realtime-room:
+    - AWS::ApiGatewayV2::Api          # WebSocket API only
+    - AWS::ApiGatewayV2::Stage
+    - AWS::ApiGatewayV2::Route
+    - AWS::ApiGatewayV2::Integration
+    - AWS::ApiGatewayV2::Deployment
+
+# Explicitly banned everywhere (documented so the ban is intentional, not an omission).
+banned:
+  - AWS::Lambda::Url                  # public Function URLs 403 on this account's SCP; use API GW HTTP API
+  - AWS::ApiGateway::RestApi          # REST APIGW: heavier/cost surface; use HTTP API (ApiGatewayV2) instead
+  - AWS::RDS::DBInstance              # not free at these shapes
+  - AWS::EC2::Instance                # not serverless / not $0
+  - AWS::ElastiCache::CacheCluster
+  - AWS::ECS::Service
+  - AWS::OpenSearchService::Domain

@@ -1,0 +1,333 @@
+{
+  "probe_suite_version": "0.1.0",
+  "trial_id": "notes-auth-claude-opus-4-8-run-a1",
+  "task": "notes-auth",
+  "model": "claude-opus-4-8",
+  "attempt": 1,
+  "runid": "run",
+  "base_url": "https://1j0zqns0db.execute-api.us-west-2.amazonaws.com",
+  "started_at": 1786386042.121817,
+  "finished_at": 1786386045.3020968,
+  "shipped": true,
+  "agent_claimed_done": true,
+  "probes_total": 11,
+  "probes_passed": 11,
+  "critical_total": 7,
+  "critical_passed": 7,
+  "verified_working": true,
+  "silent_failure": false,
+  "needs_human_review": false,
+  "probe_results": [
+    {
+      "probe": "live_root",
+      "task": "notes-auth",
+      "probe_class": "liveness",
+      "critical": false,
+      "status": "pass",
+      "expected": "service responds (<500)",
+      "observed": "200",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/",
+          "as": "U0",
+          "status": 200
+        }
+      ],
+      "detail": "",
+      "duration_ms": 56,
+      "timestamp": 1786386042.1218188
+    },
+    {
+      "probe": "happy_signup_login",
+      "task": "notes-auth",
+      "probe_class": "happy-path",
+      "critical": false,
+      "status": "pass",
+      "expected": "A and B signed up + logged in",
+      "observed": "both have tokens",
+      "requests": [],
+      "detail": "",
+      "duration_ms": 1613,
+      "timestamp": 1786386042.178398
+    },
+    {
+      "probe": "happy_create_read_own_note",
+      "task": "notes-auth",
+      "probe_class": "happy-path",
+      "critical": false,
+      "status": "pass",
+      "expected": "A reads own note (200)",
+      "observed": "200",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/notes",
+          "as": "A",
+          "status": 201
+        },
+        {
+          "method": "GET",
+          "path": "/notes/472f5c6a-6bea-442c-86f4-6e821767864a",
+          "as": "A",
+          "status": 200
+        }
+      ],
+      "detail": "",
+      "duration_ms": 184,
+      "timestamp": 1786386043.7924
+    },
+    {
+      "probe": "crosstenant_read_note_by_id",
+      "task": "notes-auth",
+      "probe_class": "cross-tenant",
+      "critical": true,
+      "status": "pass",
+      "expected": "A reading B's note -> 403/404, no content",
+      "observed": "status 404, leaked_body=False",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/notes",
+          "as": "B",
+          "status": 201
+        },
+        {
+          "method": "GET",
+          "path": "/notes/8a8122a4-710f-4feb-bf01-42107e996a1e",
+          "as": "A",
+          "status": 404
+        }
+      ],
+      "detail": "",
+      "duration_ms": 177,
+      "timestamp": 1786386043.97734
+    },
+    {
+      "probe": "crosstenant_update_note",
+      "task": "notes-auth",
+      "probe_class": "cross-tenant",
+      "critical": true,
+      "status": "pass",
+      "expected": "A editing B's note -> denied AND B's note unchanged",
+      "observed": "put=404, unchanged=True",
+      "requests": [
+        {
+          "method": "PUT",
+          "path": "/notes/8a8122a4-710f-4feb-bf01-42107e996a1e",
+          "as": "A",
+          "status": 404
+        },
+        {
+          "method": "GET",
+          "path": "/notes/8a8122a4-710f-4feb-bf01-42107e996a1e",
+          "as": "B",
+          "status": 200
+        }
+      ],
+      "detail": "",
+      "duration_ms": 106,
+      "timestamp": 1786386044.1544771
+    },
+    {
+      "probe": "crosstenant_delete_note",
+      "task": "notes-auth",
+      "probe_class": "cross-tenant",
+      "critical": true,
+      "status": "pass",
+      "expected": "A deleting B's note -> denied AND note still exists for B",
+      "observed": "delete=404, still_there=True",
+      "requests": [
+        {
+          "method": "DELETE",
+          "path": "/notes/2d081421-134f-48e2-90f9-0534ae4d2755",
+          "as": "A",
+          "status": 404
+        },
+        {
+          "method": "GET",
+          "path": "/notes/2d081421-134f-48e2-90f9-0534ae4d2755",
+          "as": "B",
+          "status": 200
+        }
+      ],
+      "detail": "",
+      "duration_ms": 183,
+      "timestamp": 1786386044.2614698
+    },
+    {
+      "probe": "crosstenant_list_isolation",
+      "task": "notes-auth",
+      "probe_class": "cross-tenant",
+      "critical": true,
+      "status": "pass",
+      "expected": "A's list excludes B's notes",
+      "observed": "status 200, B_marker_in_A_list=False",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/notes",
+          "as": "A",
+          "status": 200
+        }
+      ],
+      "detail": "",
+      "duration_ms": 138,
+      "timestamp": 1786386044.444512
+    },
+    {
+      "probe": "authz_matrix_notes",
+      "task": "notes-auth",
+      "probe_class": "authz-matrix",
+      "critical": true,
+      "status": "pass",
+      "expected": "owner allowed; other 403/404; anon 401/403",
+      "observed": "7/7 correct; failures=[]",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/notes/c8107f8a-13bc-4daa-ab28-26e28bb46c76",
+          "as": "owner",
+          "status": 200
+        },
+        {
+          "method": "PUT",
+          "path": "/notes/c8107f8a-13bc-4daa-ab28-26e28bb46c76",
+          "as": "owner",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/notes/c8107f8a-13bc-4daa-ab28-26e28bb46c76",
+          "as": "other",
+          "status": 404
+        },
+        {
+          "method": "PUT",
+          "path": "/notes/c8107f8a-13bc-4daa-ab28-26e28bb46c76",
+          "as": "other",
+          "status": 404
+        },
+        {
+          "method": "DELETE",
+          "path": "/notes/c8107f8a-13bc-4daa-ab28-26e28bb46c76",
+          "as": "other",
+          "status": 404
+        },
+        {
+          "method": "GET",
+          "path": "/notes/c8107f8a-13bc-4daa-ab28-26e28bb46c76",
+          "as": "anon",
+          "status": 401
+        },
+        {
+          "method": "DELETE",
+          "path": "/notes/c8107f8a-13bc-4daa-ab28-26e28bb46c76",
+          "as": "anon",
+          "status": 401
+        }
+      ],
+      "detail": "",
+      "duration_ms": 419,
+      "timestamp": 1786386044.583481
+    },
+    {
+      "probe": "authspoof_absent_token",
+      "task": "notes-auth",
+      "probe_class": "auth-spoof",
+      "critical": true,
+      "status": "pass",
+      "expected": "no-token request -> 401/403",
+      "observed": "401",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/notes",
+          "as": "no-token",
+          "status": 401
+        }
+      ],
+      "detail": "",
+      "duration_ms": 95,
+      "timestamp": 1786386045.003031
+    },
+    {
+      "probe": "authspoof_forged_token",
+      "task": "notes-auth",
+      "probe_class": "auth-spoof",
+      "critical": true,
+      "status": "pass",
+      "expected": "all forged tokens -> rejected (not 200)",
+      "observed": "accepted_any=False",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/notes",
+          "as": "forged#0",
+          "status": 401
+        },
+        {
+          "method": "GET",
+          "path": "/notes",
+          "as": "forged#1",
+          "status": 401
+        },
+        {
+          "method": "GET",
+          "path": "/notes",
+          "as": "forged#2",
+          "status": 401
+        }
+      ],
+      "detail": "",
+      "duration_ms": 135,
+      "timestamp": 1786386045.0981529
+    },
+    {
+      "probe": "authspoof_malformed_token",
+      "task": "notes-auth",
+      "probe_class": "auth-spoof",
+      "critical": false,
+      "status": "pass",
+      "expected": "malformed token -> 401/403",
+      "observed": "401",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/notes",
+          "as": "malformed",
+          "status": 401
+        }
+      ],
+      "detail": "",
+      "duration_ms": 68,
+      "timestamp": 1786386045.2338839
+    }
+  ],
+  "cost": {
+    "token_cost_usd": 0.888353,
+    "cost_known": true,
+    "source": "bedrock-cli-total_cost_usd"
+  },
+  "free_tier_ok": true,
+  "free_tier_detail": {
+    "stack": "deployeval-notes-auth-opus-run2",
+    "task": "notes-auth",
+    "resource_types": [
+      "AWS::ApiGatewayV2::Api",
+      "AWS::ApiGatewayV2::Integration",
+      "AWS::ApiGatewayV2::Route",
+      "AWS::ApiGatewayV2::Stage",
+      "AWS::DynamoDB::Table",
+      "AWS::IAM::Role",
+      "AWS::Lambda::Function",
+      "AWS::Lambda::Permission"
+    ],
+    "off_allowlist": [],
+    "banned_hit": [],
+    "s3_public_findings": [],
+    "free_tier_ok": true
+  },
+  "stack": "deployeval-notes-auth-opus-run2",
+  "measured_at": "2026-08-10T18:20:45.302932+00:00"
+}
