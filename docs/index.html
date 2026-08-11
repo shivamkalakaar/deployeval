@@ -127,14 +127,14 @@
     <div class="stat"><div class="n">$0</div><div class="l">AWS cost: every app ran inside the free tier, then torn down</div></div>
   </div>
 
-  <h2>The finding</h2>
-  <p><strong>All four tiers scored the same: three of four apps verified, one silent failure each.</strong> The newest frontier model (Opus 5) was no more correct than a prior-generation mid-tier one (Sonnet 4-6). Every model shipped working notes, cart, and WebSocket apps that survived attack, and every model shipped a file-share app with a <em>world-readable object store</em>. Quality was a four-way tie. The only thing that moved was the bill.</p>
-  <blockquote>The bottleneck was verification, not model capability. An agent optimizes for what it can see, which is the happy path returning <code>200</code>, and the security property it cannot see is where it silently fails.</blockquote>
+  <h2>What the results show</h2>
+  <p><strong>All four tiers scored the same: three of four apps verified, one silent failure each.</strong> The newest frontier model (Opus 5) matched a prior-generation mid-tier one (Sonnet 4-6) on correctness. Every model shipped working notes, cart, and WebSocket apps that survived attack, and every model shipped a file-share app with a <em>world-readable object store</em>. The four models tied on quality and differed only in cost.</p>
+  <blockquote>Verification was the limiting factor here more than model capability. An agent optimizes for what it can see, the happy path returning <code>200</code>, and the security property it cannot see is where it silently fails.</blockquote>
 
   <!-- ============ CHART 1: leaderboard ============ -->
   <h2>Per-model scoreboard</h2>
   <figure>
-    <p class="fig-take"><b>Same quality, different price.</b> Each model shipped all four apps, verified three of four, and produced one silent failure. Cost is the only axis that separates them.</p>
+    <p class="fig-take"><b>Equal quality, unequal price.</b> Each model shipped all four apps, verified three of four, and produced one silent failure. Cost is the axis that separates them.</p>
     <div class="legend" id="legend-board" aria-hidden="true"></div>
     <div id="chart-board"></div>
     <figcaption>Verified apps (of 4) and total build-token cost per model. Verified = shipped <em>and</em> passed every critical adversarial probe. Cost is Bedrock build tokens across the whole suite.</figcaption>
@@ -143,7 +143,7 @@
   <!-- ============ CHART 2: cost vs capability ============ -->
   <h2>Do you need the expensive model?</h2>
   <figure>
-    <p class="fig-take"><b>Paying more moved you right, not up.</b> All four models sit at the same height (3 of 4 verified). Spend ranged from $4.34 to $11.03 across the suite for the same outcome, a 2.5× spread.</p>
+    <p class="fig-take"><b>Higher spend did not buy more verified apps.</b> All four models sit at the same height (3 of 4 verified). Spend ranged from $4.34 to $11.03 across the suite for the same outcome, a 2.5× spread.</p>
     <div class="legend" id="legend-cost" aria-hidden="true"></div>
     <div id="chart-cost"></div>
     <figcaption>Vertical: apps verified working out of 4. Horizontal: total build-token cost across the suite. An ideal model sits top-left.</figcaption>
@@ -165,7 +165,7 @@
   </table>
   <p class="note">Critical probes = passed / total security-critical probes for that app. Free tier = the deployed stack used only free-tier-allowlisted services. Build cost = Bedrock tokens the model spent building and deploying, from the CLI's own usage record.</p>
 
-  <h2>The failure worth reading</h2>
+  <h2>The file-share failure, in detail</h2>
 
   <details class="autopsy" open>
     <summary>file-share: every model shipped a world-readable object store</summary>
@@ -176,9 +176,9 @@
 
   <h2>How the numbers are checked</h2>
   <ul class="method">
-    <li>Probes are adversarial, not smoke tests. A probe passes only when the security <em>property</em> holds, and it fails closed, so an ambiguous result counts against the build and never for it.</li>
+    <li>Probes attack the running app rather than checking that it returns <code>200</code>. A probe passes only when the security <em>property</em> holds, and it fails closed, so an ambiguous result counts against the build.</li>
     <li>Each build is pinned to a model and checked against the platform's own token-usage record. Builds that silently ran on a fallback model were caught and discarded rather than counted.</li>
-    <li>The $0 claim is audited, not asserted. Each deployed stack's resource types are checked against a free-tier allowlist, and every stack is torn down after measuring.</li>
+    <li>The $0 claim is audited: each deployed stack's resource types are checked against a free-tier allowlist, and every stack is torn down after measuring.</li>
     <li>Calibration is logged. When a probe was found to contradict a task's own spec or misread a valid response shape, the fix and the re-run were recorded, and superseded results were archived rather than dropped.</li>
   </ul>
   <p class="note">Four Claude tiers ran here (Opus 5, Opus 4.8, Sonnet 5, Sonnet 4-6). Two smaller Claude tiers were left out because they were not reliably available on the test account, and an open-weight model (Qwen3-Coder) was piloted through a separate agent harness but set aside as its own study rather than mixed in here, since changing the harness changes what the number means.</p>
