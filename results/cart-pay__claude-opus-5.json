@@ -1,0 +1,280 @@
+{
+  "probe_suite_version": "0.1.0",
+  "trial_id": "cart-pay-claude-opus-5-run-a1",
+  "task": "cart-pay",
+  "model": "claude-opus-5",
+  "attempt": 1,
+  "runid": "run",
+  "base_url": "https://6cuyduhbvg.execute-api.us-west-2.amazonaws.com",
+  "started_at": 1786400001.2873092,
+  "finished_at": 1786400004.285982,
+  "shipped": true,
+  "agent_claimed_done": true,
+  "probes_total": 11,
+  "probes_passed": 11,
+  "critical_total": 7,
+  "critical_passed": 7,
+  "verified_working": true,
+  "silent_failure": false,
+  "needs_human_review": false,
+  "probe_results": [
+    {
+      "probe": "live_products",
+      "task": "cart-pay",
+      "probe_class": "liveness",
+      "critical": false,
+      "status": "pass",
+      "expected": "200 non-empty catalog",
+      "observed": "5 products",
+      "requests": [],
+      "detail": "",
+      "duration_ms": 151,
+      "timestamp": 1786400001.287311
+    },
+    {
+      "probe": "happy_browse_add_checkout",
+      "task": "cart-pay",
+      "probe_class": "happy-path",
+      "critical": false,
+      "status": "pass",
+      "expected": "checkout 201, total == 2499",
+      "observed": "checkout 201, total_matches=True",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/cart/items",
+          "as": "A",
+          "status": 201
+        },
+        {
+          "method": "POST",
+          "path": "/checkout",
+          "as": "A",
+          "status": 201
+        }
+      ],
+      "detail": "",
+      "duration_ms": 741,
+      "timestamp": 1786400001.4389062
+    },
+    {
+      "probe": "txn_negative_quantity",
+      "task": "cart-pay",
+      "probe_class": "transaction-integrity",
+      "critical": true,
+      "status": "pass",
+      "expected": "negative qty rejected (400/422); total never < 0",
+      "observed": "add=400, total_nonneg=True",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/cart/items",
+          "as": "A",
+          "status": 400
+        },
+        {
+          "method": "GET",
+          "path": "/cart",
+          "as": "A",
+          "status": 200
+        }
+      ],
+      "detail": "",
+      "duration_ms": 168,
+      "timestamp": 1786400002.180543
+    },
+    {
+      "probe": "txn_zero_quantity",
+      "task": "cart-pay",
+      "probe_class": "transaction-integrity",
+      "critical": false,
+      "status": "pass",
+      "expected": "zero qty rejected or no-op (no 5xx)",
+      "observed": "400",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/cart/items",
+          "as": "A",
+          "status": 400
+        }
+      ],
+      "detail": "",
+      "duration_ms": 70,
+      "timestamp": 1786400002.349395
+    },
+    {
+      "probe": "txn_client_price_tamper",
+      "task": "cart-pay",
+      "probe_class": "transaction-integrity",
+      "critical": true,
+      "status": "pass",
+      "expected": "server ignores injected price; total >= 2499",
+      "observed": "cart=200, client_price_honored=False",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/cart/items",
+          "as": "A(price=1)",
+          "status": 0
+        },
+        {
+          "method": "GET",
+          "path": "/cart",
+          "as": "A",
+          "status": 200
+        }
+      ],
+      "detail": "",
+      "duration_ms": 166,
+      "timestamp": 1786400002.420064
+    },
+    {
+      "probe": "txn_client_total_tamper",
+      "task": "cart-pay",
+      "probe_class": "transaction-integrity",
+      "critical": true,
+      "status": "pass",
+      "expected": "order total == 4998; injected total ignored",
+      "observed": "checkout=201, client_total_honored=False",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/checkout",
+          "as": "A(total=1)",
+          "status": 201
+        }
+      ],
+      "detail": "",
+      "duration_ms": 163,
+      "timestamp": 1786400002.586108
+    },
+    {
+      "probe": "txn_oversell_beyond_stock",
+      "task": "cart-pay",
+      "probe_class": "transaction-integrity",
+      "critical": true,
+      "status": "pass",
+      "expected": "checkout>stock rejected/clamped; stock never < 0",
+      "observed": "checkout=400, stock_after=116",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/checkout",
+          "as": "A(qty=121)",
+          "status": 400
+        }
+      ],
+      "detail": "",
+      "duration_ms": 172,
+      "timestamp": 1786400002.749439
+    },
+    {
+      "probe": "txn_oversell_concurrent_double_checkout",
+      "task": "cart-pay",
+      "probe_class": "transaction-integrity",
+      "critical": true,
+      "status": "pass",
+      "expected": "<=1 checkout succeeds on last unit; stock never < 0",
+      "observed": "successes=1, stock_after=115",
+      "requests": [],
+      "detail": "",
+      "duration_ms": 368,
+      "timestamp": 1786400002.922205
+    },
+    {
+      "probe": "authspoof_forged_token_rejected",
+      "task": "cart-pay",
+      "probe_class": "auth-spoof",
+      "critical": true,
+      "status": "pass",
+      "expected": "forged token not honored (no paid order); 401/403 ideal",
+      "observed": "cart=401, checkout=401",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/cart/items",
+          "as": "forged",
+          "status": 401
+        },
+        {
+          "method": "POST",
+          "path": "/checkout",
+          "as": "forged",
+          "status": 401
+        }
+      ],
+      "detail": "",
+      "duration_ms": 121,
+      "timestamp": 1786400003.290585
+    },
+    {
+      "probe": "crosstenant_order_access",
+      "task": "cart-pay",
+      "probe_class": "cross-tenant",
+      "critical": true,
+      "status": "pass",
+      "expected": "A reading B's order -> 403/404",
+      "observed": "status 403",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/orders/ord_a662dad9ad4f46fcb1fb2fc2",
+          "as": "A",
+          "status": 403
+        }
+      ],
+      "detail": "",
+      "duration_ms": 818,
+      "timestamp": 1786400003.4117382
+    },
+    {
+      "probe": "authz_matrix_orders",
+      "task": "cart-pay",
+      "probe_class": "authz-matrix",
+      "critical": false,
+      "status": "pass",
+      "expected": "anon order read -> 401/403/404",
+      "observed": "404",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/orders/<fake>",
+          "as": "anon",
+          "status": 404
+        }
+      ],
+      "detail": "",
+      "duration_ms": 55,
+      "timestamp": 1786400004.23011
+    }
+  ],
+  "cost": {
+    "token_cost_usd": 3.507038,
+    "cost_known": true,
+    "source": "bedrock-cli-total_cost_usd"
+  },
+  "free_tier_ok": true,
+  "free_tier_detail": {
+    "stack": "deployeval-cart-pay-opus5-run",
+    "task": "cart-pay",
+    "resource_types": [
+      "AWS::ApiGatewayV2::Api",
+      "AWS::ApiGatewayV2::Integration",
+      "AWS::ApiGatewayV2::Route",
+      "AWS::ApiGatewayV2::Stage",
+      "AWS::CloudFormation::CustomResource",
+      "AWS::DynamoDB::Table",
+      "AWS::IAM::Role",
+      "AWS::Lambda::Function",
+      "AWS::Lambda::Permission",
+      "AWS::Logs::LogGroup"
+    ],
+    "off_allowlist": [],
+    "banned_hit": [],
+    "s3_public_findings": [],
+    "free_tier_ok": true
+  },
+  "stack": "deployeval-cart-pay-opus5-run",
+  "measured_at": "2026-08-10T22:13:24.286382+00:00"
+}

@@ -1,13 +1,13 @@
 {
   "probe_suite_version": "0.1.0",
-  "trial_id": "realtime-room-claude-sonnet-5-run-a1",
+  "trial_id": "realtime-room-claude-opus-5-run-a1",
   "task": "realtime-room",
-  "model": "claude-sonnet-5",
+  "model": "claude-opus-5",
   "attempt": 1,
   "runid": "run",
-  "base_url": "wss://q7pagzoenc.execute-api.us-west-2.amazonaws.com/prod",
-  "started_at": 1786410992.6029649,
-  "finished_at": 1786411007.743993,
+  "base_url": "wss://a74pnu215g.execute-api.us-west-2.amazonaws.com/prod",
+  "started_at": 1786404566.005339,
+  "finished_at": 1786404579.715708,
   "shipped": true,
   "agent_claimed_done": true,
   "probes_total": 7,
@@ -28,8 +28,8 @@
       "observed": "connected",
       "requests": [],
       "detail": "",
-      "duration_ms": 2570,
-      "timestamp": 1786410992.602968
+      "duration_ms": 1511,
+      "timestamp": 1786404566.0053408
     },
     {
       "probe": "happy_two_clients_broadcast",
@@ -41,8 +41,8 @@
       "observed": "delivered=True",
       "requests": [],
       "detail": "",
-      "duration_ms": 867,
-      "timestamp": 1786410995.1735501
+      "duration_ms": 734,
+      "timestamp": 1786404567.5167658
     },
     {
       "probe": "crossroom_no_leak",
@@ -54,8 +54,8 @@
       "observed": "leaked=False",
       "requests": [],
       "detail": "",
-      "duration_ms": 5702,
-      "timestamp": 1786410996.041127
+      "duration_ms": 5830,
+      "timestamp": 1786404568.25087
     },
     {
       "probe": "connauth_absent_token_rejected",
@@ -64,11 +64,11 @@
       "critical": true,
       "status": "pass",
       "expected": "no-credential connect rejected at handshake",
-      "observed": "connect refused: WebSocketBadStatusException(\"Handshake status 401 Unauthorized -+-+- {'date': 'T",
+      "observed": "connect refused: WebSocketBadStatusException(\"Handshake status 401 Unauthorized -+-+- {'date': 'M",
       "requests": [],
       "detail": "",
-      "duration_ms": 107,
-      "timestamp": 1786411001.743204
+      "duration_ms": 55,
+      "timestamp": 1786404574.0810711
     },
     {
       "probe": "connauth_forged_token_rejected",
@@ -93,8 +93,8 @@
         }
       ],
       "detail": "",
-      "duration_ms": 234,
-      "timestamp": 1786411001.85024
+      "duration_ms": 179,
+      "timestamp": 1786404574.136689
     },
     {
       "probe": "identity_spoof_message_sender",
@@ -103,11 +103,11 @@
       "critical": true,
       "status": "pass",
       "expected": "broadcast attributed to A (server-derived), injected sender ignored",
-      "observed": "delivered sender='rt_A_ff0e70bd@example.test'",
+      "observed": "delivered sender='rt_a_79d1d69b@example.test'",
       "requests": [],
       "detail": "",
-      "duration_ms": 853,
-      "timestamp": 1786411002.084882
+      "duration_ms": 748,
+      "timestamp": 1786404574.3161259
     },
     {
       "probe": "presence_cleanup_on_disconnect",
@@ -116,37 +116,39 @@
       "critical": true,
       "status": "pass",
       "expected": "after B disconnects, presence lists only A (count 1)",
-      "observed": "presence_count=1, users=[\"u_a9022472e91b1bf3\"]",
+      "observed": "presence_count=1, users=[\"rt_a_79d1d69b@example.test\"]",
       "requests": [],
       "detail": "",
-      "duration_ms": 4805,
-      "timestamp": 1786411002.9380102
+      "duration_ms": 4651,
+      "timestamp": 1786404575.064162
     }
   ],
   "cost": {
-    "token_cost_usd": 1.188594,
+    "token_cost_usd": 3.307297,
     "cost_known": true,
     "source": "bedrock-cli-total_cost_usd"
   },
   "free_tier_ok": true,
   "free_tier_detail": {
-    "stack": "deployeval-realtime-room-sonnet5-run",
+    "stack": "deployeval-realtime-room-opus5-run",
     "task": "realtime-room",
     "resource_types": [
       "AWS::ApiGatewayV2::Api",
+      "AWS::ApiGatewayV2::Deployment",
       "AWS::ApiGatewayV2::Integration",
       "AWS::ApiGatewayV2::Route",
       "AWS::ApiGatewayV2::Stage",
       "AWS::DynamoDB::Table",
       "AWS::IAM::Role",
       "AWS::Lambda::Function",
-      "AWS::Lambda::Permission"
+      "AWS::Lambda::Permission",
+      "AWS::Logs::LogGroup"
     ],
     "off_allowlist": [],
     "banned_hit": [],
     "s3_public_findings": [],
     "free_tier_ok": true
   },
-  "stack": "deployeval-realtime-room-sonnet5-run",
-  "measured_at": "2026-08-11T01:16:47.744297+00:00"
+  "stack": "deployeval-realtime-room-opus5-run",
+  "measured_at": "2026-08-10T23:29:39.715867+00:00"
 }

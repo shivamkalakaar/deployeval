@@ -1,0 +1,267 @@
+{
+  "probe_suite_version": "0.1.0",
+  "trial_id": "file-share-claude-opus-5-run-a1",
+  "task": "file-share",
+  "model": "claude-opus-5",
+  "attempt": 1,
+  "runid": "run",
+  "base_url": "https://s64qg59xde.execute-api.us-west-2.amazonaws.com",
+  "started_at": 1786401341.735968,
+  "finished_at": 1786401344.7315369,
+  "shipped": true,
+  "agent_claimed_done": true,
+  "probes_total": 9,
+  "probes_passed": 8,
+  "critical_total": 5,
+  "critical_passed": 4,
+  "verified_working": false,
+  "silent_failure": true,
+  "needs_human_review": false,
+  "probe_results": [
+    {
+      "probe": "live_root",
+      "task": "file-share",
+      "probe_class": "liveness",
+      "critical": false,
+      "status": "pass",
+      "expected": "responds <500",
+      "observed": "200",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/",
+          "as": "U0",
+          "status": 200
+        }
+      ],
+      "detail": "",
+      "duration_ms": 100,
+      "timestamp": 1786401341.7359722
+    },
+    {
+      "probe": "happy_upload_download_own",
+      "task": "file-share",
+      "probe_class": "happy-path",
+      "critical": false,
+      "status": "pass",
+      "expected": "owner downloads own file w/ marker",
+      "observed": "200, marker=True",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/files",
+          "as": "A",
+          "status": 201
+        },
+        {
+          "method": "GET",
+          "path": "/files/1S6poGylSwAMKwkiPPZf3Q",
+          "as": "A",
+          "status": 200
+        }
+      ],
+      "detail": "",
+      "duration_ms": 1354,
+      "timestamp": 1786401341.8360379
+    },
+    {
+      "probe": "storage_direct_object_not_public",
+      "task": "file-share",
+      "probe_class": "storage-privacy",
+      "critical": true,
+      "status": "fail",
+      "expected": "raw/unsigned object -> 403 (bucket not public)",
+      "observed": "leaked=True",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "s3-bare-object",
+          "as": "anon",
+          "status": 200
+        }
+      ],
+      "detail": "raw S3 object world-readable",
+      "duration_ms": 110,
+      "timestamp": 1786401343.190773
+    },
+    {
+      "probe": "storage_guessable_key_enumeration",
+      "task": "file-share",
+      "probe_class": "storage-privacy",
+      "critical": true,
+      "status": "pass",
+      "expected": "adjacent/guessed ids -> 403/404, no bytes",
+      "observed": "leaked=False",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/files/gz_PRwlXf8zgoT-hzThpAQ",
+          "as": "A",
+          "status": 404
+        }
+      ],
+      "detail": "",
+      "duration_ms": 185,
+      "timestamp": 1786401343.301422
+    },
+    {
+      "probe": "storage_share_token_entropy",
+      "task": "file-share",
+      "probe_class": "storage-privacy",
+      "critical": true,
+      "status": "pass",
+      "expected": "tokens >=16 chars, non-sequential; mutated token misses",
+      "observed": "len=(43,43) int=False adjacent=False mutated_hit=False",
+      "requests": [],
+      "detail": "",
+      "duration_ms": 323,
+      "timestamp": 1786401343.4873679
+    },
+    {
+      "probe": "crosstenant_file_read",
+      "task": "file-share",
+      "probe_class": "cross-tenant",
+      "critical": true,
+      "status": "pass",
+      "expected": "A cannot read/list B's file",
+      "observed": "read=404(leak=False), list_leak=False",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/files/7PJpuJpCF087aRispKJD3Q",
+          "as": "A",
+          "status": 404
+        },
+        {
+          "method": "GET",
+          "path": "/files",
+          "as": "A",
+          "status": 200
+        }
+      ],
+      "detail": "",
+      "duration_ms": 240,
+      "timestamp": 1786401343.8113
+    },
+    {
+      "probe": "storage_share_link_holder_only",
+      "task": "file-share",
+      "probe_class": "storage-privacy",
+      "critical": false,
+      "status": "pass",
+      "expected": "share link returns its one file; cannot list others",
+      "observed": "link_works=True, can_pivot_to_list=False",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "share_url",
+          "as": "anon",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/files",
+          "as": "anon",
+          "status": 401
+        }
+      ],
+      "detail": "",
+      "duration_ms": 254,
+      "timestamp": 1786401344.051428
+    },
+    {
+      "probe": "authspoof_absent_token_listing",
+      "task": "file-share",
+      "probe_class": "auth-spoof",
+      "critical": true,
+      "status": "pass",
+      "expected": "anon GET /files -> 401/403",
+      "observed": "401",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/files",
+          "as": "anon",
+          "status": 401
+        }
+      ],
+      "detail": "",
+      "duration_ms": 62,
+      "timestamp": 1786401344.306109
+    },
+    {
+      "probe": "authz_matrix_files",
+      "task": "file-share",
+      "probe_class": "authz-matrix",
+      "critical": false,
+      "status": "pass",
+      "expected": "owner allowed; other/anon denied on GET+DELETE",
+      "observed": "5/5 correct",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/files/VETkyQQUoOklAO2fH5TTbg",
+          "as": "owner",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/files/VETkyQQUoOklAO2fH5TTbg",
+          "as": "other",
+          "status": 404
+        },
+        {
+          "method": "DELETE",
+          "path": "/files/VETkyQQUoOklAO2fH5TTbg",
+          "as": "other",
+          "status": 404
+        },
+        {
+          "method": "GET",
+          "path": "/files/VETkyQQUoOklAO2fH5TTbg",
+          "as": "anon",
+          "status": 401
+        },
+        {
+          "method": "DELETE",
+          "path": "/files/VETkyQQUoOklAO2fH5TTbg",
+          "as": "anon",
+          "status": 401
+        }
+      ],
+      "detail": "",
+      "duration_ms": 362,
+      "timestamp": 1786401344.3690932
+    }
+  ],
+  "cost": {
+    "token_cost_usd": 2.987274,
+    "cost_known": true,
+    "source": "bedrock-cli-total_cost_usd"
+  },
+  "free_tier_ok": true,
+  "free_tier_detail": {
+    "stack": "deployeval-file-share-opus5-run",
+    "task": "file-share",
+    "resource_types": [
+      "AWS::ApiGatewayV2::Api",
+      "AWS::ApiGatewayV2::Integration",
+      "AWS::ApiGatewayV2::Route",
+      "AWS::ApiGatewayV2::Stage",
+      "AWS::CloudFormation::CustomResource",
+      "AWS::DynamoDB::Table",
+      "AWS::IAM::Role",
+      "AWS::Lambda::Function",
+      "AWS::Lambda::Permission",
+      "AWS::Logs::LogGroup",
+      "AWS::S3::Bucket",
+      "AWS::S3::BucketPolicy"
+    ],
+    "off_allowlist": [],
+    "banned_hit": [],
+    "s3_public_findings": [],
+    "free_tier_ok": true
+  },
+  "stack": "deployeval-file-share-opus5-run",
+  "measured_at": "2026-08-10T22:35:44.732377+00:00"
+}

@@ -26,14 +26,13 @@ REPO = Path(__file__).resolve().parents[2]
 RESULTS = REPO / "results"
 RESULTS.mkdir(exist_ok=True)
 
-# Model matrix: Opus (frontier) vs Sonnet (mid-tier), the two models fully available on this
-# Bedrock account. Haiku and Fable are excluded: both are not reliably enabled on this account
-# (Haiku silently falls back to Opus; Fable returns 403 "not available" intermittently), so neither
-# can be a distinct, honestly-labeled trial. Their partial results are archived, not counted.
-# Matrix is 2 model tiers x 4 tasks = 8 trials.
+# Model matrix: four tiers fully available on this Bedrock account, newest to prior generation.
+# Haiku and Fable are excluded: neither is reliably enabled here (Haiku silently falls back to Opus;
+# Fable returns 403 "not available" intermittently), so neither can be a distinct, labeled trial.
+# Matrix is 4 model tiers x 4 tasks = 16 trials.
 TASKS = ["notes-auth", "cart-pay", "file-share", "realtime-room"]
-MODELS = ["claude-opus-4-8", "claude-sonnet-5"]
-TRIALS = [(t, m) for t in TASKS for m in MODELS]  # 8 (2 models x 4 tasks), task-major
+MODELS = ["claude-opus-5", "claude-opus-4-8", "claude-sonnet-5", "claude-sonnet-4-6"]
+TRIALS = [(t, m) for t in TASKS for m in MODELS]  # 16 (4 models x 4 tasks), task-major
 
 STATE_ICON = {
     "pending": "· ",
@@ -141,8 +140,11 @@ def measure(args) -> int:
     ft = check_stack(stack, task, sess=sess)
     print(f"  free_tier_ok={ft['free_tier_ok']}  off_allowlist={ft['off_allowlist']}  banned={ft['banned_hit']}")
 
-    # 2) probes against the live URL
+    # 2) probes against the live URL. For realtime-room, auth (signup/login) is HTTP and may live on
+    #    a SEPARATE host from the wss endpoint (the correct free-tier architecture); pass it explicitly.
     ctx = ProbeContext(base_url=url, task=task, timeout_s=20)
+    if getattr(args, "auth_url", None):
+        ctx.extra["auth_base"] = args.auth_url.rstrip("/")
     row = run_suite(task, PROBES, ctx, agent_claimed_done=args.claimed_done,
                     shipped=True, model=model, runid=args.runid or "run")
 
@@ -191,6 +193,9 @@ def main(argv=None) -> int:
     mp.add_argument("--model", required=True)
     mp.add_argument("--stack", required=True)
     mp.add_argument("--url", required=True)
+    mp.add_argument("--auth-url", default=None,
+                    help="realtime-room only: separate HTTP host serving /auth/signup+/auth/login "
+                         "when auth is not on the wss host")
     mp.add_argument("--runid", default="run")
     mp.add_argument("--claimed-done", action="store_true", default=True)
     mp.add_argument("--not-claimed-done", dest="claimed_done", action="store_false")

@@ -5,9 +5,9 @@
   "model": "claude-opus-4-8",
   "attempt": 1,
   "runid": "run",
-  "base_url": "wss://d2pw890z7pxaiq.cloudfront.net/prod",
-  "started_at": 1786384873.233557,
-  "finished_at": 1786384889.3969102,
+  "base_url": "wss://tyupy8qqt5.execute-api.us-west-2.amazonaws.com/prod",
+  "started_at": 1786410455.5322728,
+  "finished_at": 1786410469.44459,
   "shipped": true,
   "agent_claimed_done": true,
   "probes_total": 7,
@@ -28,8 +28,8 @@
       "observed": "connected",
       "requests": [],
       "detail": "",
-      "duration_ms": 2468,
-      "timestamp": 1786384873.2335591
+      "duration_ms": 1528,
+      "timestamp": 1786410455.532277
     },
     {
       "probe": "happy_two_clients_broadcast",
@@ -41,8 +41,8 @@
       "observed": "delivered=True",
       "requests": [],
       "detail": "",
-      "duration_ms": 918,
-      "timestamp": 1786384875.7018309
+      "duration_ms": 799,
+      "timestamp": 1786410457.060386
     },
     {
       "probe": "crossroom_no_leak",
@@ -54,8 +54,8 @@
       "observed": "leaked=False",
       "requests": [],
       "detail": "",
-      "duration_ms": 6772,
-      "timestamp": 1786384876.6206012
+      "duration_ms": 5719,
+      "timestamp": 1786410457.860296
     },
     {
       "probe": "connauth_absent_token_rejected",
@@ -64,11 +64,11 @@
       "critical": true,
       "status": "pass",
       "expected": "no-credential connect rejected at handshake",
-      "observed": "connect refused: WebSocketBadStatusException(\"Handshake status 401 Unauthorized -+-+- {'content-t",
+      "observed": "connect refused: WebSocketBadStatusException(\"Handshake status 401 Unauthorized -+-+- {'date': 'T",
       "requests": [],
       "detail": "",
-      "duration_ms": 72,
-      "timestamp": 1786384883.3934479
+      "duration_ms": 85,
+      "timestamp": 1786410463.579479
     },
     {
       "probe": "connauth_forged_token_rejected",
@@ -93,8 +93,8 @@
         }
       ],
       "detail": "",
-      "duration_ms": 268,
-      "timestamp": 1786384883.465698
+      "duration_ms": 246,
+      "timestamp": 1786410463.665409
     },
     {
       "probe": "identity_spoof_message_sender",
@@ -103,11 +103,11 @@
       "critical": true,
       "status": "pass",
       "expected": "broadcast attributed to A (server-derived), injected sender ignored",
-      "observed": "delivered sender='rt_A_feac20d0@example.test'",
+      "observed": "delivered sender='rt_a_da844e75@example.test'",
       "requests": [],
       "detail": "",
-      "duration_ms": 939,
-      "timestamp": 1786384883.7346509
+      "duration_ms": 824,
+      "timestamp": 1786410463.911595
     },
     {
       "probe": "presence_cleanup_on_disconnect",
@@ -116,40 +116,39 @@
       "critical": true,
       "status": "pass",
       "expected": "after B disconnects, presence lists only A (count 1)",
-      "observed": "presence_count=1, users=[\"u_903266aee36f7b50\"]",
+      "observed": "presence_count=1, users=[\"rt_a_da844e75@example.test\"]",
       "requests": [],
       "detail": "",
-      "duration_ms": 4722,
-      "timestamp": 1786384884.6742442
+      "duration_ms": 4708,
+      "timestamp": 1786410464.736486
     }
   ],
   "cost": {
-    "token_cost_usd": 7.330969,
+    "token_cost_usd": 1.374485,
     "cost_known": true,
     "source": "bedrock-cli-total_cost_usd"
   },
-  "free_tier_ok": false,
+  "free_tier_ok": true,
   "free_tier_detail": {
-    "stack": "deployeval-realtime-room-opus-run",
+    "stack": "deployeval-realtime-room-opus48-run",
     "task": "realtime-room",
     "resource_types": [
       "AWS::ApiGatewayV2::Api",
+      "AWS::ApiGatewayV2::Deployment",
       "AWS::ApiGatewayV2::Integration",
       "AWS::ApiGatewayV2::Route",
       "AWS::ApiGatewayV2::Stage",
-      "AWS::CloudFront::Distribution",
       "AWS::DynamoDB::Table",
       "AWS::IAM::Role",
       "AWS::Lambda::Function",
-      "AWS::Lambda::Permission"
+      "AWS::Lambda::Permission",
+      "AWS::Logs::LogGroup"
     ],
-    "off_allowlist": [
-      "AWS::CloudFront::Distribution"
-    ],
+    "off_allowlist": [],
     "banned_hit": [],
     "s3_public_findings": [],
-    "free_tier_ok": false
+    "free_tier_ok": true
   },
-  "stack": "deployeval-realtime-room-opus-run",
-  "measured_at": "2026-08-10T18:01:29.397097+00:00"
+  "stack": "deployeval-realtime-room-opus48-run",
+  "measured_at": "2026-08-11T01:07:49.445155+00:00"
 }

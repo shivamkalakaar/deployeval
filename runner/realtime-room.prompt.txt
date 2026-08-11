@@ -10,7 +10,8 @@ ARCHITECTURE: this is a WebSocket app. Use **API Gateway WebSocket API** (AWS::A
 
 CONNECT + AUTH CONTRACT (probes connect exactly this way):
 - The public connect URL is `wss://<api-id>.execute-api.us-west-2.amazonaws.com/<stage>`.
-- A JWT is presented AT CONNECT as a query param `?token=<jwt>` (also accept an `Authorization: Bearer <jwt>` header). Issue tokens via an HTTP endpoint: POST /auth/login {email,password} -> 200 {token} (and POST /auth/signup {email,password} -> 201). The HTTP endpoints can be on the SAME domain over https:// (the probe derives the https base from the wss base).
+- A JWT is presented AT CONNECT as a query param `?token=<jwt>` (also accept an `Authorization: Bearer <jwt>` header). Issue tokens via an HTTP endpoint: POST /auth/login {email,password} -> 200 {token} (and POST /auth/signup {email,password} -> 201).
+- NOTE on the auth host: a bare WebSocket execute-api host answers 403 to all plain-HTTP requests, so the HTTP auth endpoints CANNOT live on the wss hostname without CloudFront/a custom domain (which is outside the free-tier list). Put the HTTP auth endpoints on a SEPARATE HTTP API host and REPORT that host explicitly as AUTH_URL below. (A unified host via CloudFront is allowed but will count as extra, non-minimal infrastructure.)
 - Validate the token in the `$connect` handler. A missing / forged / malformed / expired token MUST be rejected at the handshake (return a non-200 from $connect so the WebSocket upgrade fails), OR at minimum the connection must be unable to join or receive any messages.
 
 MESSAGE CONTRACT (JSON frames; the probe sends these exact shapes):
@@ -34,6 +35,7 @@ DO NOT tear down the stack. Do not read or write outside {{BASE}}/.
 FINAL REPORT (print these lines at the end, real values only):
 MODEL_RAN_AS: ...
 LIVE_URL: wss://<api-id>.execute-api.us-west-2.amazonaws.com/<stage>
+AUTH_URL: https://<auth-api-id>.execute-api.us-west-2.amazonaws.com/<stage>   (the HTTP host serving /auth/signup + /auth/login; may equal LIVE_URL's host only if unified via CloudFront)
 STACK_NAME: (the exact stack name, see driver-provided name below)
 CLAIMED_DONE: yes|no
 CURL_EVIDENCE: (your real WebSocket test results: connect status, the broadcast the second client received, the cross-room negative, the no-token rejection)
